@@ -1,4 +1,4 @@
-use crate::email_service::send_mail;
+// use crate::email_service::send_mail;
 use crate::errors::ServiceError;
 use crate::models::{Invitation, LoggedUser, NewUser, User};
 
@@ -11,8 +11,11 @@ use diesel::prelude::*;
 use diesel::r2d2::ConnectionManager;
 use futures::Future;
 use r2d2::Pool;
-use std::env;
 use uuid::Uuid;
+
+// when mailing is added
+// use std::env;
+
 type SqlPool = Pool<ConnectionManager<SqliteConnection>>;
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -66,13 +69,11 @@ pub fn verify(hash: &str, password: &str) -> Result<bool, ServiceError> {
 pub fn register(
     new_user: web::Json<NewUser>,
     pool: web::Data<SqlPool>,
-) -> impl Future<Item = HttpResponse, Error = Error> {
+) -> impl Future<Item = HttpResponse, Error = ServiceError> {
     use crate::schema::invitations::dsl::*;
     use crate::schema::users::dsl::*;
     web::block(move || -> Result<Option<Invitation>, ServiceError> {
-        let frotend_target =
-            env::var("REGISTRATION_CONFIRMATION_URL").expect("BIND_ADDRESS is not set");
-        let frontend_address = env::var("FRONTEND_ADDRESS").expect("FRONTEND_ADDRESS is not set");
+        
         let conn = pool.get().unwrap();
         let user = User::from(new_user.into_inner());
         let invitation = Invitation::from_user(&user);
@@ -80,20 +81,26 @@ pub fn register(
         diesel::insert_into(invitations)
             .values(&invitation)
             .execute(&conn)?;
-        send_mail(
-            user.email.clone(),
-            String::from("Confirm registration for InnoReserve"),
-            frontend_address + &frotend_target + &invitation.id,
-        );
+        
+        // when mailing is added
+        // let frotend_target = env::var("REGISTRATION_CONFIRMATION_URL").expect("BIND_ADDRESS is not set");
+        // let frontend_address = env::var("FRONTEND_ADDRESS").expect("FRONTEND_ADDRESS is not set");
+        // send_mail(
+        //     user.email.clone(),
+        //     String::from("Confirm registration for InnoReserve"),
+        //     frontend_address + &frotend_target + &invitation.id,
+        // );
         Ok(Some(invitation))
     })
-    .then(|res| match res {
-        Ok(location) => match location {
-            Some(t) => Ok(HttpResponse::Ok().json(t)),
-            None => Ok(HttpResponse::InternalServerError().into()),
-        },
-        Err(_) => Ok(HttpResponse::InternalServerError().into()),
-    })
+    .then(
+        |res| match res {
+            Ok(t) => Ok(HttpResponse::Ok().json(t)),
+            Err(err) => match err {
+                BlockingError::Error(service_error) => Err(service_error),
+                BlockingError::Canceled => Err(ServiceError::InternalServerError),
+            },
+        }
+    )
 }
 
 pub fn confirm_registration(
@@ -125,7 +132,7 @@ pub fn confirm_registration(
                         println!("We are in!");
                         diesel::update(&user).set(active.eq(1)).execute(&conn)?;
                         diesel::update(&inv).set(resolved.eq(1)).execute(&conn)?;
-                        return Ok(LoggedUser::from_user(&user));
+                        return Ok(LoggedUser::from(user));
                     } else {
                         println!(
                             "Passwords don't match or the invitation expired! matching: {:?}",
@@ -165,7 +172,7 @@ pub fn login(
         if let Some(user) = items.pop() {
             if let Ok(matching) = verify(&user.password, &auth_data.password) {
                 if matching {
-                    return Ok(LoggedUser::from_user(&user));
+                    return Ok(LoggedUser::from(user));
                 }
             }
         }

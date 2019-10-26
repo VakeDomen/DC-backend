@@ -16,3 +16,12 @@ create table notes
     date_tag    datetime not null,
     body        varchar not null
 );
+
+
+create table invitations
+(
+  id          varchar not null primary key,
+  email       varchar not null,
+  expires_at  datetime not null,
+  resolved    int not null
+);

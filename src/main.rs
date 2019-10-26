@@ -12,7 +12,7 @@ use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
 
 use routes::get_api;
-// usse crate::routes::auth;
+use crate::routes::auth;
 
 mod routes;
 mod schema;
@@ -58,13 +58,13 @@ fn main() {
                     .max_age(3600),
                     )
                 .wrap(middleware::Logger::default())
-                // .wrap(IdentityService::new(
-                //     CookieIdentityPolicy::new(auth::SECRET_KEY.as_bytes())
-                //         .name("auth")
-                //         .path("/")
-                //         .max_age_time(chrono::Duration::days(1))
-                //         .secure(false), // https
-                // ))
+                .wrap(IdentityService::new(
+                    CookieIdentityPolicy::new(auth::SECRET_KEY.as_bytes())
+                        .name("auth")
+                        .path("/")
+                        .max_age_time(chrono::Duration::days(1))
+                        .secure(false), // https
+                ))
                 .service(get_api())
 
 

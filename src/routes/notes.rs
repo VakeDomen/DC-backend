@@ -4,20 +4,21 @@ use futures::Future;
 use diesel::prelude::*;
 use diesel::r2d2::ConnectionManager;
 
-use crate::models::{ Note, NewNote };
+use crate::models::{ Note, NewNote, LoggedUser};
 use crate::errors::ServiceError;
 
 type SqlPool = Pool<ConnectionManager<SqliteConnection>>;
 
 
 pub fn get_list(
+    user: LoggedUser,
     pool: web::Data<SqlPool>,
 ) -> impl Future<Item = HttpResponse, Error = ServiceError> {
     use crate::schema::notes::dsl::*;
     web::block(
         move || -> Result<Vec<Note>, ServiceError> {
             let conn = pool.get().unwrap();
-            let list_of_notes = notes.load::<Note>(&conn)?;
+            let list_of_notes = notes.filter(user_id.eq(user.id)).load::<Note>(&conn)?;
             Ok(list_of_notes)
         }
     )
@@ -34,6 +35,7 @@ pub fn get_list(
 
 
 pub fn insert(
+    user: LoggedUser,
     note: web::Json<NewNote>,
     pool: web::Data<SqlPool>,
 ) -> impl Future<Item = HttpResponse, Error = ServiceError> {
@@ -41,7 +43,7 @@ pub fn insert(
     web::block(
         move || -> Result<Note, ServiceError> {
             let conn = pool.get().unwrap();
-            let note = Note::from(note.into_inner());
+            let note = Note::from(note.into_inner(), user);
             diesel::insert_into(notes).values(&note).execute(&conn)?;
             Ok(note)
         }

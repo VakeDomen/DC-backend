@@ -18,7 +18,17 @@ table! {
     }
 }
 
+table! {
+    invitations (id) {
+        id -> Text,
+        email -> Text,
+        expires_at -> Timestamp,
+        resolved -> Integer,
+    }
+}
+
 allow_tables_to_appear_in_same_query! {
     users,
-    notes
+    notes,
+    invitations,
 }
