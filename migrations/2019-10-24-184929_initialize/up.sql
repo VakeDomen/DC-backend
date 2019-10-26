@@ -3,6 +3,7 @@ create table users
 (
     id          varchar not null primary key,
     name        varchar not null,
+    email       varchar not null,
     password    varchar not null,
     active      varchar not null
 );
