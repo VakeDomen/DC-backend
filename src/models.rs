@@ -1,8 +1,6 @@
 use crate::routes::auth::hash_password;
-use crate::schema::{
-    notes, users, invitations
-};
-use chrono::{ NaiveDateTime };
+use crate::schema::{invitations, notes, users};
+use chrono::NaiveDateTime;
 use uuid::Uuid;
 
 #[derive(
@@ -30,7 +28,6 @@ pub struct LoggedUser {
     pub email: String,
 }
 
-
 impl LoggedUser {
     pub fn from(user: User) -> Self {
         LoggedUser {
@@ -47,7 +44,7 @@ impl User {
             id: Uuid::new_v4().to_string(),
             name: user.name,
             email: user.email,
-            password:  hash_password(&user.password).unwrap(),
+            password: hash_password(&user.password).unwrap(),
             active: 0,
         }
     }
@@ -80,9 +77,6 @@ impl Invitation {
     }
 }
 
-
-
-
 #[derive(Clone, Debug, Serialize, Queryable, Insertable)]
 pub struct Note {
     pub id: String,
@@ -98,7 +92,6 @@ pub struct NewNote {
     pub date_tag: NaiveDateTime,
     pub body: String,
 }
-
 
 impl Note {
     pub fn from(note: NewNote, user: LoggedUser) -> Self {

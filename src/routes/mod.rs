@@ -4,17 +4,14 @@ pub mod auth;
 mod notes;
 mod users;
 
-
 pub fn get_api() -> Scope {
     web::scope("/api")
         .service(
-            web::scope("/notes")
-                .service(
-                    web::resource("/")
-                        .route(web::get().to_async(notes::get_list))
-                        .route(web::post().to_async(notes::insert))
-                ),
-                
+            web::scope("/notes").service(
+                web::resource("/")
+                    .route(web::get().to_async(notes::get_list))
+                    .route(web::post().to_async(notes::insert)),
+            ),
         )
         .service(
             web::scope("/auth")
@@ -30,5 +27,4 @@ pub fn get_api() -> Scope {
                         .route(web::post().to_async(auth::confirm_registration)),
                 ),
         )
-
 }

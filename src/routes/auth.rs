@@ -73,7 +73,6 @@ pub fn register(
     use crate::schema::invitations::dsl::*;
     use crate::schema::users::dsl::*;
     web::block(move || -> Result<Option<Invitation>, ServiceError> {
-        
         let conn = pool.get().unwrap();
         let user = User::from(new_user.into_inner());
         let invitation = Invitation::from_user(&user);
@@ -81,26 +80,24 @@ pub fn register(
         diesel::insert_into(invitations)
             .values(&invitation)
             .execute(&conn)?;
-        
+
         // when mailing is added
         // let frotend_target = env::var("REGISTRATION_CONFIRMATION_URL").expect("BIND_ADDRESS is not set");
         // let frontend_address = env::var("FRONTEND_ADDRESS").expect("FRONTEND_ADDRESS is not set");
         // send_mail(
         //     user.email.clone(),
-        //     String::from("Confirm registration for InnoReserve"),
+        //     String::from("Confirm registration for InnoReserve")
         //     frontend_address + &frotend_target + &invitation.id,
         // );
         Ok(Some(invitation))
     })
-    .then(
-        |res| match res {
-            Ok(t) => Ok(HttpResponse::Ok().json(t)),
-            Err(err) => match err {
-                BlockingError::Error(service_error) => Err(service_error),
-                BlockingError::Canceled => Err(ServiceError::InternalServerError),
-            },
-        }
-    )
+    .then(|res| match res {
+        Ok(t) => Ok(HttpResponse::Ok().json(t)),
+        Err(err) => match err {
+            BlockingError::Error(service_error) => Err(service_error),
+            BlockingError::Canceled => Err(ServiceError::InternalServerError),
+        },
+    })
 }
 
 pub fn confirm_registration(

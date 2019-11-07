@@ -14,7 +14,6 @@ pub enum ServiceError {
 
     #[display(fmt = "Unauthorized")]
     Unauthorized,
-
 }
 
 impl ResponseError for ServiceError {
@@ -49,4 +48,3 @@ impl From<DBError> for ServiceError {
         }
     }
 }
-
