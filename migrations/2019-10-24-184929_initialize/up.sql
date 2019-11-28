@@ -11,10 +11,13 @@ create table users
 create table notes
 (
     id          varchar not null primary key,
+    group_id    varchar null,
     user_id     varchar not null,
     title       varchar not null,
     date_tag    datetime not null,
-    body        varchar not null
+    body        varchar not null,
+    public      int not null,
+    pinned      int not null
 );
 
 

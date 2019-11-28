@@ -43,7 +43,7 @@ fn main() {
             .wrap(
                 Cors::new()
                     .allowed_origin(&fronend_address)
-                    .allowed_methods(vec!["GET", "POST", "DELETE", "PUT"])
+                    .allowed_methods(vec!["GET", "POST", "DELETE", "PUT", "PATCH"])
                     .allowed_headers(vec![
                         header::AUTHORIZATION,
                         header::ACCEPT,

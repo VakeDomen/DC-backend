@@ -77,30 +77,52 @@ impl Invitation {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Queryable, Insertable)]
+#[derive(Clone, Debug, Serialize, Queryable, Insertable, Identifiable)]
 pub struct Note {
     pub id: String,
+    pub group_id: Option<String>,
     pub user_id: String,
     pub title: String,
     pub date_tag: NaiveDateTime,
     pub body: String,
+    pub public: i32,
+    pub pinned: i32,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct NewNote {
     pub title: String,
-    pub date_tag: NaiveDateTime,
+    pub group_id: Option<String>,
+    pub date_tag: String,
     pub body: String,
+    pub public: i32,
+    pub pinned: i32,
+}
+
+
+#[derive(Clone, Debug, AsChangeset, Deserialize)]
+#[table_name = "notes"]
+pub struct NotePatch {
+    pub user_id: Option<String>,
+    pub group_id: Option<String>,
+    pub title: Option<String>,
+    pub date_tag: Option<String>,
+    pub body: Option<String>,
+    pub public: Option<i32>,
+    pub pinned: Option<i32>,
 }
 
 impl Note {
     pub fn from(note: NewNote, user: LoggedUser) -> Self {
         Note {
             id: Uuid::new_v4().to_string(),
+            group_id: note.group_id,
             user_id: user.id,
             title: note.title,
-            date_tag: note.date_tag,
+            date_tag:  NaiveDateTime::parse_from_str(&note.date_tag, "%Y-%m-%d %H:%M:%S").unwrap(),
             body: note.body,
+            public: note.public,
+            pinned: note.pinned,
         }
     }
 }

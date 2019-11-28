@@ -11,10 +11,13 @@ table! {
 table! {
     notes(id) {
         id -> Text,
+        group_id -> Nullable<Text>,
         user_id -> Text,
         title -> Text,
         date_tag -> Timestamp,
         body -> Text,
+        public -> Integer,
+        pinned -> Integer,
     }
 }
 
