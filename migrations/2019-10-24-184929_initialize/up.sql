@@ -20,6 +20,14 @@ create table notes
     pinned      int not null
 );
 
+create table groups
+(
+  id            varchar not null primary key,
+  created_at    datetime not null,
+  created_by    varchar not null,
+  name          varchar not null
+);
+
 
 create table invitations
 (
