@@ -1,6 +1,6 @@
 use crate::routes::auth::hash_password;
-use crate::schema::{invitations, notes, users};
-use chrono::NaiveDateTime;
+use crate::schema::{invitations, notes, users, groups, group_links};
+use chrono::{NaiveDateTime, Utc};
 use uuid::Uuid;
 
 #[derive(
@@ -21,7 +21,8 @@ pub struct NewUser {
     pub password: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Identifiable)]
+#[table_name = "users"]
 pub struct LoggedUser {
     pub id: String,
     pub name: String,
@@ -123,6 +124,52 @@ impl Note {
             body: note.body,
             public: note.public,
             pinned: note.pinned,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, Insertable, Queryable, Identifiable)]
+pub struct Group {
+    pub id: String,
+    pub created_at: NaiveDateTime,
+    pub created_by: String,
+    pub name: String,
+}
+
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct NewGroup {
+    pub name: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, Associations, Insertable, Queryable, Identifiable)]
+//#[belongs_to(User)]
+#[belongs_to(LoggedUser, foreign_key="user_id")]
+#[belongs_to(Group)]
+#[table_name = "group_links"]
+pub struct GroupLink {
+    pub id: String,
+    pub user_id: String,
+    pub group_id: String,
+}
+
+impl GroupLink {
+    pub fn from(group: &Group, user: &LoggedUser) -> Self {
+        GroupLink {
+            id: Uuid::new_v4().to_string(),
+            group_id: group.id.clone(),
+            user_id: user.id.clone(),
+        }
+    }
+}
+
+impl Group {
+    pub fn from(group: NewGroup, user: LoggedUser) -> Self {
+        Group {
+            id: Uuid::new_v4().to_string(),
+            created_at: NaiveDateTime::parse_from_str(&Utc::now().to_string(), "%Y-%m-%d %H:%M:%S").unwrap(),
+            created_by: user.id,
+            name: group.name,
         }
     }
 }

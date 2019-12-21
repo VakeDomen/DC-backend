@@ -28,6 +28,12 @@ create table groups
   name          varchar not null
 );
 
+create table group_links
+(
+  id          varchar not null primary key,
+  user_id     varchar not null,
+  group_id    varchar not null
+);
 
 create table invitations
 (
