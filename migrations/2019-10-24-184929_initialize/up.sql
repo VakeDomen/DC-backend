@@ -25,7 +25,8 @@ create table groups
   id            varchar not null primary key,
   created_at    datetime not null,
   created_by    varchar not null,
-  name          varchar not null
+  name          varchar not null,
+  color         varchar not null
 );
 
 create table group_links

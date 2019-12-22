@@ -78,7 +78,9 @@ impl Invitation {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Queryable, Insertable, Identifiable)]
+#[derive(Clone, Debug, Serialize, Queryable, Associations, Insertable, Identifiable)]
+#[belongs_to(Group)]
+#[belongs_to(User)]
 pub struct Note {
     pub id: String,
     pub group_id: Option<String>,
@@ -134,13 +136,30 @@ pub struct Group {
     pub created_at: NaiveDateTime,
     pub created_by: String,
     pub name: String,
+    pub color: String,
 }
 
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct NewGroup {
+    pub color: String,
     pub name: String,
 }
+
+impl Group {
+    pub fn from(group: NewGroup, user: LoggedUser) -> Self {
+        let mut now = Utc::now().naive_utc().to_string();
+        now.truncate(19);
+        Group {
+            id: Uuid::new_v4().to_string(),
+            created_at: NaiveDateTime::parse_from_str(&now, "%Y-%m-%d %H:%M:%S").unwrap(),
+            created_by: user.id,
+            name: group.name,
+            color: group.color,
+        }
+    }
+}
+
 
 #[derive(Clone, Debug, Deserialize, Serialize, Associations, Insertable, Queryable, Identifiable)]
 //#[belongs_to(User)]
@@ -159,17 +178,6 @@ impl GroupLink {
             id: Uuid::new_v4().to_string(),
             group_id: group.id.clone(),
             user_id: user.id.clone(),
-        }
-    }
-}
-
-impl Group {
-    pub fn from(group: NewGroup, user: LoggedUser) -> Self {
-        Group {
-            id: Uuid::new_v4().to_string(),
-            created_at: NaiveDateTime::parse_from_str(&Utc::now().to_string(), "%Y-%m-%d %H:%M:%S").unwrap(),
-            created_by: user.id,
-            name: group.name,
         }
     }
 }

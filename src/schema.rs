@@ -27,6 +27,7 @@ table! {
         created_at -> Timestamp,
         created_by -> Text,
         name -> Text,
+        color -> Text,
     }
 }
 

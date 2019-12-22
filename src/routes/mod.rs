@@ -15,10 +15,13 @@ pub fn get_api() -> Scope {
                         .route(web::post().to_async(notes::insert)))
                 .service(
                     web::resource("/public")
-                        .route(web::get().to_async(notes::get_public))))
+                        .route(web::get().to_async(notes::get_public)))
+                .service(
+                    web::resource("/groups")
+                        .route(web::get().to_async(groups::users_groups_notes)))
                 .service(
                     web::resource("/{id}")
-                        .route(web::patch().to_async(notes::update_note)))
+                        .route(web::patch().to_async(notes::update_note))))
         .service(
             web::scope("/groups")
                 .service(
@@ -27,9 +30,13 @@ pub fn get_api() -> Scope {
                         .route(web::post().to_async(groups::insert)))
                 .service(
                     web::resource("/join")
-                        .route(web::post().to_async(groups::join))
-                        .route(web::delete().to_async(groups::leave)))
-        )
+                        .route(web::post().to_async(groups::join)))
+                .service(
+                    web::resource("/leave")
+                        .route(web::post().to_async(groups::leave)))
+                .service(
+                    web::resource("/{id}")
+                        .route(web::get().to_async(groups::group_notes))))
         .service(
             web::scope("/auth")
                 .service(
