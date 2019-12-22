@@ -102,6 +102,12 @@ pub struct NewNote {
     pub pinned: i32,
 }
 
+#[derive(Clone, Debug, Serialize)]
+pub struct GroupedNotes {
+    pub group: Group,
+    pub notes: Vec<Note>,
+}
+
 
 #[derive(Clone, Debug, AsChangeset, Deserialize)]
 #[table_name = "notes"]

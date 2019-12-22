@@ -6,7 +6,7 @@ use r2d2::Pool;
 use uuid::Uuid;
 
 use crate::errors::ServiceError;
-use crate::models::{LoggedUser, Group, NewGroup, GroupLink, Note};
+use crate::models::{LoggedUser, Group, NewGroup, GroupLink, Note, GroupedNotes};
 
 type SqlPool = Pool<ConnectionManager<SqliteConnection>>;
 
@@ -20,12 +20,15 @@ pub fn group_notes(
     use crate::schema::groups::dsl::id as g_id;
     use crate::schema::notes::dsl::*;
     use crate::schema::notes::dsl::group_id as n_g_id;
-    web::block(move || -> Result<(Group, Vec<Note>), ServiceError> {
+    web::block(move || -> Result<GroupedNotes, ServiceError> {
         let conn = pool.get().unwrap();
         let uuid = uuid.into_inner().to_string();
         let group = groups.filter(g_id.eq(&uuid)).first::<Group>(&conn)?;
         let note_list = notes.filter(n_g_id.eq(&uuid)).load::<Note>(&conn)?;
-        Ok((group, note_list))
+        Ok(GroupedNotes {
+            group, 
+            notes: note_list
+        })
     }) 
     .then(
         |res| match res {
@@ -47,17 +50,24 @@ pub fn users_groups_notes(
     use crate::schema::group_links::dsl::group_id as l_g_id;
     use crate::schema::notes::dsl::*;
     use crate::schema::notes::dsl::group_id as n_g_id;
-    web::block(move || -> Result<Vec<(Group, Vec<Note>)>, ServiceError> {
+    web::block(move || -> Result<Vec<GroupedNotes>, ServiceError> {
         let conn = pool.get().unwrap();
+        let mut out: Vec<GroupedNotes> = vec![];
         let group_ids = GroupLink::belonging_to(&user)
             .select(l_g_id).load::<String>(&conn)?;
         let group_list = groups.filter(g_id.eq_any(&group_ids)).load::<Group>(&conn)?;
         let note_list = notes.filter(n_g_id.eq_any(&group_ids)).load::<Note>(&conn)?;
         let grouped_notes: Vec<Vec<Note>> = note_list.grouped_by(&group_list);
-        let out = group_list
+        let zipped: Vec<(Group, Vec<Note>)> = group_list
             .into_iter()
             .zip(grouped_notes)
             .collect();
+        for grp in zipped {
+            out.push(GroupedNotes {
+                group: grp.0,
+                notes: grp.1,
+            });
+        } 
         Ok(out)
         
     }) 
