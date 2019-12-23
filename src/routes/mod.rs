@@ -36,7 +36,8 @@ pub fn get_api() -> Scope {
                         .route(web::post().to_async(groups::leave)))
                 .service(
                     web::resource("/{id}")
-                        .route(web::get().to_async(groups::group_notes))))
+                        .route(web::get().to_async(groups::group_notes))
+                        .route(web::delete().to_async(groups::delete))))
         .service(
             web::scope("/auth")
                 .service(

@@ -174,15 +174,47 @@ pub fn leave(
     use crate::schema::groups::dsl::*;
     use crate::schema::groups::dsl::id as g_id;
     use crate::schema::group_links::dsl::*;
-    use crate::schema::group_links::dsl::id as l_id;
     web::block(move || -> Result<Group, ServiceError> {
         let conn = pool.get().unwrap();
         let target = target.into_inner();
         let group = groups.filter(g_id.eq(&target.id)).first::<Group>(&conn)?;
-        let link = group_links
-            .filter(group_id.eq(&target.id).and(user_id.eq(&user.id)))
-            .first::<GroupLink>(&conn)?;
-        diesel::delete(group_links.filter(l_id.eq(&link.id))).execute(&conn)?;
+        diesel::delete(
+            group_links.filter(group_id.eq(&target.id).and(user_id.eq(&user.id))))
+            .execute(&conn)?;
+        Ok(group)
+    })
+    .then(
+        |res| match res {
+            Ok(t) => Ok(HttpResponse::Ok().json(t)),
+            Err(err) => match err {
+                BlockingError::Error(service_error) => Err(service_error),
+                BlockingError::Canceled => Err(ServiceError::InternalServerError),
+            }
+        }
+    )
+}
+
+pub fn delete(
+    user: LoggedUser,
+    uuid: web::Path<Uuid>,
+    pool: web::Data<SqlPool>,
+) -> impl Future<Item = HttpResponse, Error = ServiceError> {
+    use crate::schema::groups::dsl::*;
+    use crate::schema::groups::dsl::id as g_id;
+    use crate::schema::group_links::dsl::*;
+    web::block(move || -> Result<Group, ServiceError> {
+        let conn = pool.get().unwrap();
+        let target = uuid.into_inner().to_string();
+        let group = groups.filter(g_id.eq(&target)).first::<Group>(&conn)?;
+        if &group.created_by != &user.id {
+            return Err(ServiceError::Forbidden);
+        }
+        diesel::delete(
+            group_links.filter(group_id.eq(&target)))
+            .execute(&conn)?;
+        diesel::delete(
+            groups.filter(g_id.eq(&target)))
+            .execute(&conn)?;
         Ok(group)
     })
     .then(
