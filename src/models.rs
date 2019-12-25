@@ -14,6 +14,14 @@ pub struct User {
     pub active: i32,
 }
 
+#[derive(Clone, Debug, Serialize)]
+pub struct PublicUser {
+    pub id: String,
+    pub name: String,
+    pub email: String,
+    pub active: i32,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct NewUser {
     pub name: String,
@@ -29,6 +37,16 @@ pub struct LoggedUser {
     pub email: String,
 }
 
+impl PublicUser {
+    pub fn from(user: User) -> Self {
+        PublicUser {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            active: user.active,
+        }
+    }
+}
 impl LoggedUser {
     pub fn from(user: User) -> Self {
         LoggedUser {

@@ -52,4 +52,9 @@ pub fn get_api() -> Scope {
                 .service(
                     web::resource("/register/{uuid}")
                         .route(web::post().to_async(auth::confirm_registration))))
+        .service(
+            web::scope("/users")
+                .service(
+                    web::resource("/{uuid}")
+                        .route(web::get().to_async(users::get_user))))
 }
