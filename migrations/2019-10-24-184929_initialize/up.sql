@@ -14,7 +14,7 @@ create table notes
     group_id    varchar null,
     user_id     varchar not null,
     title       varchar not null,
-    date_tag    datetime not null,
+    date_tag    datetime null,
     body        varchar not null,
     public      int not null,
     pinned      int not null

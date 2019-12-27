@@ -104,7 +104,7 @@ pub struct Note {
     pub group_id: Option<String>,
     pub user_id: String,
     pub title: String,
-    pub date_tag: NaiveDateTime,
+    pub date_tag: Option<NaiveDateTime>,
     pub body: String,
     pub public: i32,
     pub pinned: i32,
@@ -114,7 +114,7 @@ pub struct Note {
 pub struct NewNote {
     pub title: String,
     pub group_id: Option<String>,
-    pub date_tag: String,
+    pub date_tag: Option<String>,
     pub body: String,
     pub public: i32,
     pub pinned: i32,
@@ -141,12 +141,16 @@ pub struct NotePatch {
 
 impl Note {
     pub fn from(note: NewNote, user: LoggedUser) -> Self {
+        // let mut date: Option<String> = None();
         Note {
             id: Uuid::new_v4().to_string(),
             group_id: note.group_id,
             user_id: user.id,
             title: note.title,
-            date_tag:  NaiveDateTime::parse_from_str(&note.date_tag, "%Y-%m-%d %H:%M:%S").unwrap(),
+            date_tag:  match note.date_tag {
+                Some(date) => Some(NaiveDateTime::parse_from_str(&date, "%Y-%m-%d %H:%M:%S").unwrap()),
+                None => None,
+            },
             body: note.body,
             public: note.public,
             pinned: note.pinned,

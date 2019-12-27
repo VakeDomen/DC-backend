@@ -14,7 +14,7 @@ table! {
         group_id -> Nullable<Text>,
         user_id -> Text,
         title -> Text,
-        date_tag -> Timestamp,
+        date_tag -> Nullable<Timestamp>,
         body -> Text,
         public -> Integer,
         pinned -> Integer,

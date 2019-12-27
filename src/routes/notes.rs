@@ -6,7 +6,7 @@ use r2d2::Pool;
 use uuid::Uuid;
 
 use crate::errors::ServiceError;
-use crate::models::{LoggedUser, NewNote, Note, NotePatch};
+use crate::models::{LoggedUser, NewNote, Note, NotePatch, GroupLink};
 
 type SqlPool = Pool<ConnectionManager<SqliteConnection>>;
 
@@ -47,8 +47,45 @@ pub fn get_public(
     })
 }
 
-
-
+pub fn get_note (
+    user: LoggedUser,
+    uuid: web::Path<Uuid>,
+    pool: web::Data<SqlPool>,
+) -> impl Future<Item = HttpResponse, Error = ServiceError> {
+    use crate::schema::notes::dsl::*;
+    use crate::schema::group_links::group_id as l_g_id;
+    web::block(move || -> Result<Note, ServiceError> {
+        let conn = pool.get().unwrap();
+        let uuid = uuid.into_inner().to_string();
+        let note = notes
+            .filter(id.eq(&uuid))          
+            .first::<Note>(&conn)?;
+        if note.user_id != user.id && note.public != 1 {
+            //check groups
+            match &note.group_id {
+                Some(gid) => {
+                    let mut link = GroupLink::belonging_to(&user)
+                        .filter(l_g_id.eq(gid))
+                        .load::<GroupLink>(&conn)?;
+                    if let Some(_) = link.pop() {
+                        return Ok(note);
+                    } else {
+                        return Err(ServiceError::Forbidden);
+                    }
+                },
+                None => return Err(ServiceError::Forbidden),
+            }   
+        }
+        Ok(note)
+    })
+    .then(|res| match res {
+        Ok(t) => Ok(HttpResponse::Ok().json(t)),
+        Err(err) => match err {
+            BlockingError::Error(service_error) => Err(service_error),
+            BlockingError::Canceled => Err(ServiceError::InternalServerError),
+        },
+    })
+}
 
 pub fn update_note(
     user: LoggedUser,
