@@ -22,7 +22,8 @@ pub fn get_api() -> Scope {
                 .service(
                     web::resource("/{id}")
                         .route(web::get().to_async(notes::get_note))
-                        .route(web::patch().to_async(notes::update_note))))
+                        .route(web::patch().to_async(notes::update_note))
+                        .route(web::delete().to_async(notes::delete_note))))
         .service(
             web::scope("/groups")
                 .service(

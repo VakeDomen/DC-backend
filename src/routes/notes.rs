@@ -87,6 +87,40 @@ pub fn get_note (
     })
 }
 
+pub fn delete_note (
+    user: LoggedUser,
+    uuid: web::Path<Uuid>,
+    pool: web::Data<SqlPool>,
+) -> impl Future<Item = HttpResponse, Error = ServiceError> {
+    use crate::schema::notes::dsl::*;
+    
+    web::block(move || -> Result<Note, ServiceError> {
+        let conn = pool.get().unwrap();
+        let uuid = uuid.into_inner().to_string();
+        let note = notes
+            .filter(id.eq(&uuid))          
+            .first::<Note>(&conn)?;
+        if &note.user_id != &user.id {
+            return Err(ServiceError::Forbidden);
+        }
+        diesel::delete(
+                notes.filter(id.eq(&note.id))
+            ).execute(&conn)?;
+        diesel::delete(
+                GroupLink::belonging_to(&user)
+            ).execute(&conn)?;
+        
+        Ok(note)
+    })
+    .then(|res| match res {
+        Ok(t) => Ok(HttpResponse::Ok().json(t)),
+        Err(err) => match err {
+            BlockingError::Error(service_error) => Err(service_error),
+            BlockingError::Canceled => Err(ServiceError::InternalServerError),
+        },
+    })
+}
+
 pub fn update_note(
     user: LoggedUser,
     uuid: web::Path<Uuid>,

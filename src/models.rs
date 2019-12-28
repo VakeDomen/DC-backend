@@ -141,7 +141,6 @@ pub struct NotePatch {
 
 impl Note {
     pub fn from(note: NewNote, user: LoggedUser) -> Self {
-        // let mut date: Option<String> = None();
         Note {
             id: Uuid::new_v4().to_string(),
             group_id: note.group_id,
