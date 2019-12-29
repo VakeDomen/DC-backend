@@ -126,7 +126,6 @@ pub struct GroupedNotes {
     pub notes: Vec<Note>,
 }
 
-
 #[derive(Clone, Debug, AsChangeset, Deserialize)]
 #[table_name = "notes"]
 pub struct NotePatch {
@@ -187,9 +186,7 @@ impl Group {
     }
 }
 
-
 #[derive(Clone, Debug, Deserialize, Serialize, Associations, Insertable, Queryable, Identifiable)]
-//#[belongs_to(User)]
 #[belongs_to(LoggedUser, foreign_key="user_id")]
 #[belongs_to(Group)]
 #[table_name = "group_links"]
